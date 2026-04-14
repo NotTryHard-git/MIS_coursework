@@ -12,10 +12,3 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Базовый класс для моделей
 Base = declarative_base()
 
-# Функция для получения сессии БД (будем использовать в зависимостях FastAPI)
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

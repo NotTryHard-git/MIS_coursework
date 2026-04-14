@@ -1,7 +1,7 @@
 # backend/models/all_models.py
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, BigInteger, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, BigInteger, Boolean
 from sqlalchemy.orm import relationship
-from database import Base
+from backend.app.database import Base
 
 
 class Equipment(Base):
@@ -13,19 +13,35 @@ class Equipment(Base):
     place_id = Column(Integer, ForeignKey("public.location.place_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
     document_id = Column(Integer, ForeignKey("public.equipment_files.document_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
     type_id = Column(Integer, ForeignKey("public.equipment_type.type_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-    
-    # Связи
+    is_used = Column(Boolean, nullable=False, default=False)
+    # Связи - добавьте cascade и passive_deletes
     location = relationship("Location", back_populates="equipment")
     equipment_files = relationship("EquipmentFiles", back_populates="equipment")
     equipment_type = relationship("EquipmentType", back_populates="equipment")
-    electric_motor = relationship("ElectricMotor", back_populates="equipment", uselist=False)
-    machine_tool = relationship("MachineTool", back_populates="equipment", uselist=False)
-    pump = relationship("Pump", back_populates="equipment", uselist=False)
     
-    def __repr__(self):
-        return f"<Equipment(id={self.id}, name={self.name})>"
-
-
+    # Измените эти строки
+    electric_motor = relationship(
+        "ElectricMotor", 
+        back_populates="equipment", 
+        uselist=False,
+        cascade="all, delete-orphan",  # Добавлено
+        passive_deletes=True  # Добавлено
+    )
+    machine_tool = relationship(
+        "MachineTool", 
+        back_populates="equipment", 
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+    pump = relationship(
+        "Pump", 
+        back_populates="equipment", 
+        uselist=False,
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+    
 class EquipmentFiles(Base):
     __tablename__ = "equipment_files"
     __table_args__ = {"schema": "public"}
@@ -75,8 +91,8 @@ class ElectricMotor(Base):
     __table_args__ = {"schema": "public"}
     
     id = Column(Integer, ForeignKey("public.equipment.id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    power_kw = Column(Numeric(10, 2), nullable=False)
-    rated_current_a = Column(Numeric(10, 2), nullable=False)
+    power_kw = Column(Float, nullable=False)  # Изменено с Numeric на Float
+    rated_current_a = Column(Float, nullable=False)  # Изменено с Numeric на Float
     rated_speed_rpm = Column(Integer, nullable=False)
     shaft_diameter_mm = Column(Integer, nullable=False)
     energy_efficiency_class = Column(String(10), nullable=False)
@@ -94,7 +110,7 @@ class MachineTool(Base):
     
     id = Column(Integer, ForeignKey("public.equipment.id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
     table_size_mm = Column(String(30), nullable=False)
-    max_workpiece_weight_kg = Column(Numeric(10, 2), nullable=False)
+    max_workpiece_weight_kg = Column(Float, nullable=False)  # Изменено с Numeric на Float
     rotation_speed_rpm = Column(Integer, nullable=False)
     axis_count = Column(Integer, nullable=False)
     accuracy_class = Column(String(20), nullable=False)
@@ -111,8 +127,8 @@ class Pump(Base):
     __table_args__ = {"schema": "public"}
     
     id = Column(Integer, ForeignKey("public.equipment.id", onupdate="CASCADE", ondelete="CASCADE"), primary_key=True)
-    capacity_m3_per_hour = Column(Numeric(10, 2), nullable=False)
-    engine_power_kw = Column(Numeric(10, 2), nullable=False)
+    capacity_m3_per_hour = Column(Float, nullable=False)  # Изменено с Numeric на Float
+    engine_power_kw = Column(Float, nullable=False)  # Изменено с Numeric на Float
     voltage_v = Column(String(20), nullable=False)
     inlet_diameter_mm = Column(Integer, nullable=False)
     outlet_diameter_mm = Column(Integer, nullable=False)
@@ -132,7 +148,7 @@ class User(Base):
     last_name = Column(String(30), nullable=False)
     first_name = Column(String(30), nullable=False)
     middle_name = Column(String(30), nullable=False)
-    login = Column(String(30), nullable=False)
+    login = Column(String(30), nullable=False, unique=True)
     is_admin = Column(Boolean, nullable=False)
     hash_password = Column(String(255), nullable=False)
     

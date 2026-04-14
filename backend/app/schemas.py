@@ -2,7 +2,8 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from datetime import datetime
 from typing import Optional
-from decimal import Decimal
+# Удаляем импорт Decimal
+# from decimal import Decimal
 
 
 # ==================== EquipmentFiles ====================
@@ -48,8 +49,8 @@ class EquipmentTypeResponse(BaseModel):
 # ==================== Location ====================
 class LocationCreate(BaseModel):
     """Схема для создания местоположения"""
-    workshop_number: int = Field(..., ge=1, description="Номер цеха")
-    warehouse_number: int = Field(..., ge=1, description="Номер склада")
+    workshop_number: int = Field(default=1, ge=1, description="Номер цеха")
+    warehouse_number: int = Field(default=1, ge=1, description="Номер склада")
     
 
 
@@ -69,8 +70,16 @@ class EquipmentCreate(BaseModel):
     place_id: int = Field(..., gt=0, description="ID местоположения")
     document_id: int = Field(..., gt=0, description="ID документа")
     type_id: int = Field(..., gt=0, description="ID типа оборудования")
+    is_used: bool = Field(default=False)
     
+class EquipmentTypeSearch(BaseModel):
+    """ Схема для расширенного поиска в оборудовании"""
+    key: str = Field(..., min_length=1, max_length=100, description="Название характеристики")
+    value: str = Field(..., min_length=1, max_length=100, description="Значение характеристики")
 
+class EquipmentSearch(BaseModel):
+    """ Схема для расширенного поиска в оборудовании"""
+    name: str = Field(..., min_length=1, max_length=100, description="Название оборудования")
 
 class EquipmentResponse(BaseModel):
     """Схема для ответа с оборудованием"""
@@ -79,16 +88,15 @@ class EquipmentResponse(BaseModel):
     place_id: int
     document_id: int
     type_id: int
-    
+    is_used: bool
     model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== ElectricMotor ====================
 class ElectricMotorCreate(BaseModel):
     """Схема для создания электродвигателя"""
-    id: int = Field(..., gt=0, description="ID оборудования")
-    power_kw: Decimal = Field(..., ge=0, max_digits=10, decimal_places=2, description="Мощность в кВт")
-    rated_current_a: Decimal = Field(..., ge=0, max_digits=10, decimal_places=2, description="Номинальный ток в А")
+    power_kw: float = Field(..., ge=0, description="Мощность в кВт")
+    rated_current_a: float = Field(..., ge=0, description="Номинальный ток в А")
     rated_speed_rpm: int = Field(..., gt=0, description="Номинальная скорость в об/мин")
     shaft_diameter_mm: int = Field(..., gt=0, description="Диаметр вала в мм")
     energy_efficiency_class: str = Field(..., max_length=10, description="Класс энергоэффективности")
@@ -98,8 +106,8 @@ class ElectricMotorCreate(BaseModel):
 class ElectricMotorResponse(BaseModel):
     """Схема для ответа с электродвигателем"""
     id: int
-    power_kw: Decimal
-    rated_current_a: Decimal
+    power_kw: float
+    rated_current_a: float
     rated_speed_rpm: int
     shaft_diameter_mm: int
     energy_efficiency_class: str
@@ -110,9 +118,8 @@ class ElectricMotorResponse(BaseModel):
 # ==================== MachineTool ====================
 class MachineToolCreate(BaseModel):
     """Схема для создания станка"""
-    id: int = Field(..., gt=0, description="ID оборудования")
     table_size_mm: str = Field(..., max_length=30, description="Размер стола в мм")
-    max_workpiece_weight_kg: Decimal = Field(..., ge=0, max_digits=10, decimal_places=2, description="Максимальный вес заготовки в кг")
+    max_workpiece_weight_kg: float = Field(..., ge=0, description="Максимальный вес заготовки в кг")
     rotation_speed_rpm: int = Field(..., gt=0, description="Скорость вращения в об/мин")
     axis_count: int = Field(..., ge=1, le=10, description="Количество осей")
     accuracy_class: str = Field(..., max_length=20, description="Класс точности")
@@ -123,7 +130,7 @@ class MachineToolResponse(BaseModel):
     """Схема для ответа со станком"""
     id: int
     table_size_mm: str
-    max_workpiece_weight_kg: Decimal
+    max_workpiece_weight_kg: float
     rotation_speed_rpm: int
     axis_count: int
     accuracy_class: str
@@ -134,9 +141,8 @@ class MachineToolResponse(BaseModel):
 # ==================== Pump ====================
 class PumpCreate(BaseModel):
     """Схема для создания насоса"""
-    id: int = Field(..., gt=0, description="ID оборудования")
-    capacity_m3_per_hour: Decimal = Field(..., ge=0, max_digits=10, decimal_places=2, description="Производительность в м³/час")
-    engine_power_kw: Decimal = Field(..., ge=0, max_digits=10, decimal_places=2, description="Мощность двигателя в кВт")
+    capacity_m3_per_hour: float = Field(..., ge=0, description="Производительность в м³/час")
+    engine_power_kw: float = Field(..., ge=0, description="Мощность двигателя в кВт")
     voltage_v: str = Field(..., max_length=20, description="Напряжение в В")
     inlet_diameter_mm: int = Field(..., gt=0, description="Диаметр входного отверстия в мм")
     outlet_diameter_mm: int = Field(..., gt=0, description="Диаметр выходного отверстия в мм")
@@ -146,8 +152,8 @@ class PumpCreate(BaseModel):
 class PumpResponse(BaseModel):
     """Схема для ответа с насосом"""
     id: int
-    capacity_m3_per_hour: Decimal
-    engine_power_kw: Decimal
+    capacity_m3_per_hour: float
+    engine_power_kw: float
     voltage_v: str
     inlet_diameter_mm: int
     outlet_diameter_mm: int
@@ -163,7 +169,7 @@ class UserCreate(BaseModel):
     middle_name: str = Field(..., min_length=1, max_length=30, description="Отчество")
     login: str = Field(..., min_length=3, max_length=30, description="Логин")
     is_admin: bool = Field(..., description="Администратор ")
-    hash_password: str = Field(..., min_length=6, max_length=255, description="Хеш пароля")
+    password: str = Field(..., min_length=6, max_length=255, description="Пароль")
     
     
     
@@ -192,37 +198,51 @@ class EquipmentWithDetailsResponse(BaseModel):
     electric_motor: Optional[ElectricMotorResponse] = None
     machine_tool: Optional[MachineToolResponse] = None
     pump: Optional[PumpResponse] = None
-    
+    is_used: bool
     model_config = ConfigDict(from_attributes=True)
 
 
-#class EquipmentFullCreate(BaseModel):
-#    """Схема для создания оборудования со всеми связанными данными"""
-#    # Основные данные оборудования
-#    name: str = Field(..., min_length=1, max_length=100)
-#    place_id: int = Field(..., gt=0)
-#    type_id: int = Field(..., gt=0)
-#    
-#    # Данные файлов (опционально, можно создать отдельно)
-#    passport_unique_name: Optional[str] = Field(None, max_length=255)
-#    documentation_unique_name: Optional[str] = Field(None, max_length=255)
-#    
-#    # Данные для специфического типа оборудования (только одно из трёх)
-#    electric_motor: Optional[ElectricMotorCreate] = None
-#    machine_tool: Optional[MachineToolCreate] = None
-#    pump: Optional[PumpCreate] = None
-#    
-#    @field_validator('electric_motor', 'machine_tool', 'pump')
-#    @classmethod
-#    def validate_only_one_type(cls, v, info):
-#        """Проверка, что указан только один тип оборудования"""
-#        values = info.data
-#        types_count = sum([
-#            1 if values.get('electric_motor') else 0,
-#            1 if values.get('machine_tool') else 0,
-#            1 if values.get('pump') else 0
-#        ])
-#        if types_count > 1:
-#            raise ValueError('Only one equipment type (electric_motor, machine_tool, or pump) can be specified')
-#        return v
+class EquipmentFullCreate(BaseModel):
+    """Схема для создания оборудования со всеми связанными данными"""
+    # Основные данные оборудования
+    name: str = Field(..., min_length=1, max_length=100)
+    place_id: int = Field(..., gt=0)
+    type_id: int = Field(..., gt=0)
+    is_used: bool = Field(default=False)
+    # Данные файлов (опционально, можно создать отдельно)
+    passport_unique_name: Optional[str] = Field(None, max_length=255)
+    documentation_unique_name: Optional[str] = Field(None, max_length=255)
     
+    # Данные для специфического типа оборудования (только одно из трёх)
+    electric_motor: Optional[ElectricMotorCreate] = None
+    machine_tool: Optional[MachineToolCreate] = None
+    pump: Optional[PumpCreate] = None
+    
+    @field_validator('electric_motor', 'machine_tool', 'pump')
+    @classmethod
+    def validate_only_one_type(cls, v, info):
+        """Проверка, что указан только один тип оборудования"""
+        values = info.data
+        types_count = sum([
+            1 if values.get('electric_motor') else 0,
+            1 if values.get('machine_tool') else 0,
+            1 if values.get('pump') else 0
+        ])
+        if types_count > 1:
+            raise ValueError('Only one equipment type (electric_motor, machine_tool, or pump) can be specified')
+        return v
+    
+class SUserAuth(BaseModel):
+    login: str = Field(..., description="Логин")
+    password: str = Field(..., min_length=6, max_length=255, description="Пароль")
+
+# ==================== Схема для обновления оборудования ====================
+class EquipmentFullUpdate(BaseModel):
+    """Схема для обновления оборудования"""
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    place_id: Optional[int] = Field(None, gt=0)
+    type_id: Optional[int] = Field(None, gt=0)
+    electric_motor: Optional[ElectricMotorCreate] = None
+    machine_tool: Optional[MachineToolCreate] = None
+    pump: Optional[PumpCreate] = None
+    is_used: Optional[bool] = None
